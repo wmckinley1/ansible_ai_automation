@@ -34,13 +34,16 @@
         attachments:
           - text: "!!!!!! ALERT !!!!!!"
             color: "#ff00dd"
-            title: "{{ linux_service | capitalize }} error detected"
+            title: "{{ inc_number }} - {{ linux_service | capitalize }} error detected"
             fields:
               - title: Issue
                 value: "{{ linux_service | capitalize }} error detected"
                 short: true
               - title: Details
                 value: "{{ slack_message }}"
+                short: true
+              - title: INC Created for Tracking
+                value: "{{ inc_number }}"
                 short: true
       delegate_to: localhost
       when: (slack_message | default('') | length) > 0
@@ -52,7 +55,7 @@
         attachments:
           - text: "!!!!!! RCA INSIGHT !!!!!!"
             color: "#ffa500"
-            title: "{{ linux_service | capitalize }} Root Cause Identified for {{ inc_number }}"
+            title: "{{ inc_number }} - {{ linux_service | capitalize }} Root Cause Identified"
             fields:
               - title: RCA of {{ linux_service | capitalize }} error detected
                 value: "AI-Generated Explanation"
