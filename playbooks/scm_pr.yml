@@ -73,6 +73,6 @@
             title: "New Lightspeed Playbook Created for outage"
             fields:
               - title: Remediation
-                value: "{{ repository['path'] }}/lightspeed-response.yml"
+                value: "{{ gitea_url }}/lab-user/{{ repo_name }}/src/branch/main/lightspeed-response.yml"
                 short: true
       delegate_to: localhost
