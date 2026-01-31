@@ -1,0 +1,8 @@
+---
+- name: Kafka
+  hosts: all
+  become: true
+  tasks:
+    - name: Include Kafka Role
+      ansible.builtin.include_role:
+        name: lb2961.ai_driven_aap.kafka

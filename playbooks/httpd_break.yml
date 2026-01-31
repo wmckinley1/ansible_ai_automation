@@ -1,0 +1,29 @@
+---
+- name: Add bad directive under in Apache configuration
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Ensure Apache is installed
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+      notify:
+        - Restart apache
+
+    - name: Add InvalidDirectiveHere
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        insertafter: '^ServerRoot'
+        line: 'InvalidDirectiveHere'
+        state: present
+      notify:
+        - Restart apache
+
+  handlers:
+    - name: Restart apache
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+      register: httpd_restart_result
+      failed_when: "'Job for httpd.service failed' not in httpd_restart_result.msg | default('')"

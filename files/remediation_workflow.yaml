@@ -1,0 +1,30 @@
+---
+- identifier: remediation_generator
+  unified_job_template:
+    name: 🧠 Lightspeed Remediation Playbook Generator
+    organization: Default
+    type: job_template
+  related:
+    success_nodes:
+      - commit_fix
+- identifier: commit_fix
+  unified_job_template:
+    name: 🧾 Commit Fix to Gitea
+    organization: Default
+    type: job_template
+  related:
+    success_nodes:
+      - project_sync
+- identifier: project_sync
+  unified_job_template:
+    name: Lightspeed-Playbooks
+    organization: Default
+    type: project
+  related:
+    success_nodes:
+      - remediation_build
+- identifier: remediation_build
+  unified_job_template:
+    name: ⚙️ Build HTTPD Remediation Template
+    organization: Default
+    type: job_template

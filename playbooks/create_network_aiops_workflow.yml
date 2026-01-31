@@ -1,0 +1,107 @@
+---
+- name: Create Network AIOps Workflow and Job Templates
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Get project details to find SCM URL
+      ansible.controller.project:
+        name: "Lightspeed-Playbooks-Network"
+        state: present
+      register: project_info
+
+    - name: Display project info
+      ansible.builtin.debug:
+        var: project_info
+
+    - name: Sync Lightspeed-Playbooks-Network project
+      ansible.controller.project_update:
+        project: "Lightspeed-Playbooks-Network"
+        wait: true
+        timeout: 300
+
+    - name: Wait for project files to be available
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Sync project again to ensure files are picked up
+      ansible.controller.project_update:
+        project: "Lightspeed-Playbooks-Network"
+        wait: true
+        timeout: 300
+
+    - name: Create Lightspeed Response Checkmode job template
+      ansible.controller.job_template:
+        name: "Lightspeed Response Checkmode"
+        description: "Run AI-generated playbook in check mode"
+        organization: "Default"
+        job_type: "check"
+        inventory: "network-inventory"
+        project: "Lightspeed-Playbooks-Network"
+        playbook: "lightspeed-response-network.yml"
+        credentials:
+          - "Network Credential"
+        verbosity: 1
+        state: present
+
+    - name: Create Lightspeed Response Runmode job template
+      ansible.controller.job_template:
+        name: "Lightspeed Response Runmode"
+        description: "Execute AI-generated playbook in run mode"
+        organization: "Default"
+        job_type: "run"
+        inventory: "network-inventory"
+        project: "Lightspeed-Playbooks-Network"
+        playbook: "lightspeed-response-network.yml"
+        credentials:
+          - "Network Credential"
+        verbosity: 1
+        state: present
+
+    - name: Create Network AIOps Workflow Template
+      ansible.controller.workflow_job_template:
+        name: "Network-AIOps-Workflow"
+        description: "AI-driven network remediation workflow with human approval"
+        organization: "Default"
+        inventory: "network-inventory"
+        state: present
+        workflow_nodes:
+          - identifier: create_playbook_ai
+            unified_job_template:
+              name: "Network AIOps"
+              organization:
+                name: Default
+              type: job_template
+            related:
+              success_nodes:
+                - identifier: playbook_checkmode
+          - identifier: playbook_checkmode
+            unified_job_template:
+              name: "Lightspeed Response Checkmode"
+              organization:
+                name: Default
+              type: job_template
+            related:
+              success_nodes:
+                - identifier: human_review
+          - identifier: human_review
+            unified_job_template:
+              name: "Human Review Approval"
+              description: "Approve running the playbook in run mode"
+              organization:
+                name: Default
+              type: workflow_approval
+            related:
+              success_nodes:
+                - identifier: playbook_runmode
+          - identifier: playbook_runmode
+            unified_job_template:
+              name: "Lightspeed Response Runmode"
+              organization:
+                name: Default
+              type: job_template
+
+    - name: Display workflow creation success
+      ansible.builtin.debug:
+        msg: "Network AIOps Workflow and job templates created successfully"

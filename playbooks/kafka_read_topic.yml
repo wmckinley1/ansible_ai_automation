@@ -1,0 +1,33 @@
+---
+# kafka_topic_check.yml
+# Ansible playbook to check Kafka topic messages using console consumer
+
+- name: Check Kafka Topic Messages
+  hosts: all
+  gather_facts: false
+  become: true
+
+  vars:
+    kafka_container_name: cp-kafka
+    kafka_bootstrap_server: localhost:9092
+    kafka_topic_name: httpd-error-logs
+    from_beginning: true  # Set to false if you only want new messages
+    max_messages: 10100     # Maximum number of messages to retrieve
+    timeout_ms: 10000     # Timeout in milliseconds (10 seconds)
+
+  tasks:
+    - name: Run Kafka console consumer to check topic
+      ansible.builtin.shell: >
+        podman exec {{ kafka_container_name }}
+        /opt/kafka/bin/kafka-console-consumer.sh
+        --bootstrap-server {{ kafka_bootstrap_server }}
+        --topic {{ kafka_topic_name }}
+        {% if from_beginning %}--from-beginning{% endif %}
+        --max-messages {{ max_messages }}
+        --timeout-ms {{ timeout_ms }}
+      register: kafka_messages
+      changed_when: false
+
+    - name: Display Kafka topic messages
+      ansible.builtin.debug:
+        var: kafka_messages.stdout_lines

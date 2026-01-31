@@ -1,0 +1,26 @@
+---
+- name: Fix Apache configuration
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure Apache is installed
+      ansible.builtin.dnf:
+        name: httpd
+        state: present
+      notify:
+        - Restart apache
+
+    - name: Maintain httpd.conf
+      ansible.builtin.lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^InvalidDirectiveHere$'
+        state: absent
+      notify:
+        - Restart apache
+
+  handlers:
+    - name: Restart apache
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+      register: httpd_restart_result

@@ -1,0 +1,24 @@
+---
+- name: Setup two routers for OSPF
+  hosts:
+   - cisco-rtr1
+   - cisco-rtr2
+  gather_facts: false
+  vars:
+    # Set bastion_ip as extra var when running the job template
+    # or it will default to 'bastion' hostname
+    bastion_ip: "{{ bastion_ip | default('bastion') }}"
+
+  tasks:
+
+  - name: Setup cisco-1
+    cisco.ios.config:
+     src: ../templates/cisco-1.j2
+     save_when: always
+    when: inventory_hostname == 'cisco-rtr1'
+
+  - name: Setup cisco-2
+    cisco.ios.config:
+     src: ../templates/cisco-2.j2
+     save_when: always
+    when: inventory_hostname == 'cisco-rtr2'

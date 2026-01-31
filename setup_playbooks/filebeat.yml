@@ -1,0 +1,13 @@
+---
+- name: Deploy Filebeat to forward Apache logs to Kafka
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Install filebeat
+      vars:
+        filebeat_kafka_brokers: "service1:9092"
+        filebeat_kafka_topic: "httpd-error-logs"
+      ansible.builtin.include_role:
+        name: "../roles/filebeat"

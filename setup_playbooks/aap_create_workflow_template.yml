@@ -1,0 +1,68 @@
+---
+- name: Create Job Template with Survey
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Set a fact with the LLM text
+      ansible.builtin.set_fact:
+        gpt_generated_prompt: "{{ gpt_response.json.choices[0].text }}"
+
+    - name: Show the LLM response text
+      ansible.builtin.debug:
+        msg: "The LLM suggests: {{ gpt_generated_prompt }}"
+
+    - name: Create Job Template
+      ansible.controller.job_template:
+        name: "🧠 Lightspeed Remediation Playbook Generator"
+        job_type: "run"
+        inventory: "{{ input_inventory | default('Demo Inventory') }}"
+        project: "{{ input_project | default('AI-EDA') }}"
+        playbook: "{{ input_playbook | default('playbooks/lightspeed_generate.yml') }}"
+        credentials:
+          - "{{ input_credential | default('AAP') }}"
+          - "{{ vault_credential | default('ansible-vault') }}"
+        validate_certs: true
+        execution_environment: "Default execution environment"
+
+    - name: Load remediation workflow template
+      ansible.controller.workflow_job_template:
+        name: Remediation Workflow
+        organization: Default
+        state: present
+        survey_enabled: true
+        survey_spec: "{{ lookup('template', playbook_dir + '/templates/survey.j2') }}"
+        workflow_nodes:
+          - identifier: remediation_generator
+            unified_job_template:
+              name: "🧠 Lightspeed Remediation Playbook Generator"
+              organization:
+                name: Default
+              type: job_template
+            related:
+              success_nodes:
+                - identifier: commit_fix
+          - identifier: commit_fix
+            unified_job_template:
+              name: "🧾 Commit Fix to Gitea"
+              organization:
+                name: Default
+              type: job_template
+            related:
+              success_nodes:
+                - identifier: project_sync
+          - identifier: project_sync
+            unified_job_template:
+              name: Lightspeed-Playbooks
+              organization:
+                name: Default
+              type: project
+            related:
+              success_nodes:
+                - identifier: remediation_build
+          - identifier: remediation_build
+            unified_job_template:
+              name: "⚙️ Build HTTPD Remediation Template"
+              organization:
+                name: Default
+              type: job_template

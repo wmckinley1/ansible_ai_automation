@@ -1,0 +1,107 @@
+---
+- name: Create lightspeed_playbooks repository on Gitea
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Set input vars
+      ansible.builtin.set_fact:
+        gitea_url: "https://bastion.cj4kg.sandbox897.opentlc.com:488"  # Replace with your Gitea URL
+        repo_name: "{{ input_repo_name | default('lightspeed_playbooks') }}"
+        repo_description: "{{ input_repo_description | default('Repository for Lightspeed Ansible Playbooks') }}"
+        gitea_username: "{{ input_gitea_username | default('lab-user') }}"
+        gitea_password: "{{ input_gitea_password | default('MjQ5NDQx_1') }}"
+
+    - name: Get authentication cookie
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/user/login"
+        method: GET
+        status_code: 200
+        validate_certs: false
+        return_content: true
+      register: login_page
+
+    - name: Extract CSRF token
+      ansible.builtin.set_fact:
+        csrf_token: "{{ login_page.content | regex_search('name=\"_csrf\" value=\"([^\"]+)\"', '\\1') | default([], true) | first | default('') }}"
+
+    - name: Login to Gitea
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/user/login"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          user_name: "{{ gitea_username }}"
+          password: "{{ gitea_password }}"
+          _csrf: "{{ csrf_token }}"
+        status_code: [200, 302, 303]
+        follow_redirects: all
+        validate_certs: false
+        return_content: true
+      register: login_result
+
+    - name: Create repository via Gitea API
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/user/repos"
+        method: POST
+        body_format: json
+        body:
+          name: "{{ repo_name }}"
+          description: "{{ repo_description }}"
+          private: false
+          auto_init: false
+        url_username: "{{ gitea_username }}"
+        url_password: "{{ gitea_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        status_code: [201, 409]
+        return_content: true
+      register: repo_create_api
+
+    - name: Debug API repository creation response
+      ansible.builtin.debug:
+        var: repo_create_api.json
+
+
+    - name: Delete existing token with name "AnsibleToken" (if it exists)
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/users/{{ gitea_username }}/tokens/AnsibleToken"
+        method: DELETE
+        url_username: "{{ gitea_username }}"
+        url_password: "{{ gitea_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        status_code: 204
+      ignore_errors: true
+
+    - name: Create Gitea Personal Access Token
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/users/{{ gitea_username }}/tokens"
+        method: POST
+        body_format: json
+        body:
+          name: "AnsibleToken"
+          scopes:
+            - "write:activitypub"
+            - "write:misc"
+            - "write:notification"
+            - "write:organization"
+            - "write:package"
+            - "write:issue"
+            - "write:repository"
+            - "write:user"
+        url_username: "{{ gitea_username }}"
+        url_password: "{{ gitea_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        status_code: 201
+        return_content: true
+      register: token_create_api
+
+    - name: Save Gitea Token
+      ansible.builtin.set_fact:
+        gitea_token: "{{ token_create_api }}"
+
+    - name: Save Gitea Token
+      ansible.builtin.set_fact:
+        gitea_token_sha1: "{{ gitea_token.json.sha1 }}"
