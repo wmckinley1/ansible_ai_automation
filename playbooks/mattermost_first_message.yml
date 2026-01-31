@@ -42,8 +42,8 @@
               - title: Details
                 value: "{{ slack_message }}"
                 short: true
-              - title: INC Created for Tracking
-                value: "{{ inc_number }}"
+              - title: "INC Created for Tracking - {{ inc_number }}"
+                value: ""
                 short: true
       delegate_to: localhost
       when: (slack_message | default('') | length) > 0
