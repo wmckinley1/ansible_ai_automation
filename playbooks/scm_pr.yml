@@ -55,7 +55,7 @@
     - name: Save parsed Lightspeed playbook to YAML file
       ansible.builtin.copy:
         content: "{{ lightspeed_playbook_parsed }}"
-        dest: "{{ repository['path'] }}/lightspeed-response.yml"
+        dest: "{{ repository['path'] }}/{{ workflow_inc_number }}.yml"
         mode: '0644'
 
     - name: Commit and push final version of playbook to Gitea
@@ -73,6 +73,6 @@
             title: "New Lightspeed Playbook Created for outage"
             fields:
               - title: Remediation
-                value: "{{ gitea_url }}/lab-user/{{ repo_name }}/src/branch/main/lightspeed-response.yml"
+                value: "{{ gitea_url }}/lab-user/{{ repo_name }}/src/branch/main/{{ workflow_inc_number }}.yml"
                 short: true
       delegate_to: localhost

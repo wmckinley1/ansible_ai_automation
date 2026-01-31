@@ -32,3 +32,5 @@
         state: present
         survey_enabled: true
         survey_spec: "{{ lookup('template', playbook_dir + '/templates/survey.j2') | from_yaml  }}"
+        extra_vars:
+          workflow_inc_number: "{{ workflow_inc_number | default('') }}"

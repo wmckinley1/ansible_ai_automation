@@ -17,6 +17,16 @@
       ansible.builtin.set_fact:
         linux_service: "{{ input_linux_service | default('httpd') }}"
 
+    - name: Generate INC number
+      ansible.builtin.set_fact:
+        inc_number: "INC{{ '%06d' | format(range(0, 999999) | random) }}"
+
+    - name: Persist INC number for workflow
+      ansible.builtin.set_stats:
+        data:
+          workflow_inc_number: "{{ inc_number }}"
+        per_host: false
+
     - name: Send error notification message via Mattermost
       community.general.mattermost:
         url: "{{ mattermost_instance }}"
@@ -42,7 +52,7 @@
         attachments:
           - text: "!!!!!! RCA INSIGHT !!!!!!"
             color: "#ffa500"
-            title: "{{ linux_service | capitalize }} Root Cause Identified"
+            title: "{{ linux_service | capitalize }} Root Cause Identified for {{ inc_number }}"
             fields:
               - title: RCA of {{ linux_service | capitalize }} error detected
                 value: "AI-Generated Explanation"

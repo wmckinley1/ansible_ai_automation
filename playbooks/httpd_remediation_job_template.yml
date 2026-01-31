@@ -6,7 +6,7 @@
   tasks:
     - name: Create Job Template
       ansible.controller.job_template:
-        name: "🔧✅ Execute HTTPD Remediation"
+        name: "🔧✅ SNOW Remediation Job Template"
         job_type: "run"
         inventory: "{{ input_inventory | default('lab-inventory') }}"
         project: "{{ input_project | default('Lightspeed-Playbooks') }}"
@@ -16,4 +16,5 @@
         execution_environment: "Default execution environment"
         become_enabled: true
         ask_limit_on_launch: true
+        ask_credential_on_launch: true
 
