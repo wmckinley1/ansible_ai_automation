@@ -76,4 +76,3 @@
                 value: "{{ repository['path'] }}/lightspeed-response.yml"
                 short: true
       delegate_to: localhost
-      when: (slack_message | default('') | length) > 0
