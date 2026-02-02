@@ -63,16 +63,3 @@
         path: "{{ repository['path'] }}"
         token: "{{ gitea_token }}"
 
-    - name: Send error notification message via Mattermost
-      community.general.mattermost:
-        url: "{{ mattermost_instance }}"
-        api_key: "{{ mattermost_token }}"
-        attachments:
-          - text: "!!!!!! ALERT !!!!!!"
-            color: "#ff00dd"
-            title: "New Lightspeed Playbook Created for outage"
-            fields:
-              - title: Remediation
-                value: "{{ gitea_url }}/lab-user/{{ repo_name }}/src/branch/main/{{ workflow_inc_number }}.yml"
-                short: true
-      delegate_to: localhost
